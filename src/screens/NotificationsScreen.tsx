@@ -1,25 +1,29 @@
 // src/screens/NotificationsScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, FlatList, Text, ActivityIndicator, StyleSheet, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import { driverApi } from '../api/driverApi';
 
 export const NotificationsScreen = () => {
-  const [data, setData] = useState([]);
+  type Notification = {
+    id: number;
+    title: string;
+    body: string;
+    created_at: string;
+  };
+  const [data, setData] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isFocused = useIsFocused();
+  const navigation = useNavigation();
 
   const fetchNotifications = async () => {
     if (!user) return;
+    setLoading(true);
     try {
-      console.log('Fetching notifications for user:', user.id);
-      const res = await fetch(
-        `https://test.lipslay.com/api/driverNotification?user_id=${user.id}`,
-      );
-      const json = await res.json();
-      console.log('Notifications:', json);
+      const json = await driverApi.getNotifications(user.id);
       setData(json.notifications ?? []);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -40,6 +44,14 @@ export const NotificationsScreen = () => {
     }
   }, [isFocused, user]);
 
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button title="Logout" color="#e74c3c" onPress={logout} />
+      ),
+      headerTitle: 'Notifications',
+    });
+  }, [navigation, logout]);
 
   if (loading) {
     return (
@@ -49,7 +61,7 @@ export const NotificationsScreen = () => {
     );
   }
 
-  const formatTime = (iso) =>
+  const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',

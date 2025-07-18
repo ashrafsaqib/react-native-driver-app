@@ -1,13 +1,6 @@
 // src/screens/LoginScreen.tsx
 import React, { useState } from 'react';
-import {
-  Alert,
-  Button,
-  StyleSheet,
-  TextInput,
-  View,
-  ActivityIndicator,
-} from 'react-native';
+import { Alert, Button, StyleSheet, TextInput, View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,7 +19,6 @@ export const LoginScreen = () => {
     setLoading(true);
     try {
       await login(username.trim(), password.trim());
-      // on success AuthContext automatically navigates away
     } catch (err: any) {
       Alert.alert('Login failed', err.message || 'Unable to sign in');
     } finally {

@@ -3,7 +3,11 @@ import { View, FlatList, TextInput, Button, StyleSheet, SafeAreaView, Text, Aler
 import { driverApi } from '../api/driverApi';
 import { useAuth } from '../context/AuthContext';
 
-export const ChatScreen = ({ route }) => {
+type ChatScreenProps = {
+  route: { params: { orderId: number } };
+};
+
+export const ChatScreen = ({ route }: ChatScreenProps) => {
   const { orderId } = route.params;
   const { user } = useAuth();
   const [text, setText] = useState('');
@@ -24,10 +28,7 @@ export const ChatScreen = ({ route }) => {
   const send = async () => {
     const trimmedText = text.trim();
     if (!trimmedText || !user) return;
-
-    // Check if the text content is a location coordinate
     const isLocation = /^-?\d{1,3}(\.\d+)?,\s*-?\d{1,3}(\.\d+)?$/.test(trimmedText);
-
     try {
       const response = await driverApi.sendChat(orderId, {
         user_id: String(user.id),
@@ -36,7 +37,7 @@ export const ChatScreen = ({ route }) => {
       });
       if (response.success) {
         setText('');
-        load(); // Refresh chat on success
+        load();
       } else {
         Alert.alert('Error', 'Failed to send message.');
       }

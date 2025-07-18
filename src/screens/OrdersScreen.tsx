@@ -1,26 +1,41 @@
 // src/screens/OrdersScreen.tsx
 import React, { useEffect, useState, useRef } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Button,
-  FlatList,
-  Linking,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Button, FlatList, Linking, Platform, StyleSheet, Text, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { driverApi } from '../api/driverApi';
 import { useAuth } from '../context/AuthContext';
 
+const driverStatusActions = {
+  "Pick me": "Accepted",
+  "Accepted": "Coming",
+  "Coming": "Arrived for pick",
+  "Arrived for pick": "Traveling",
+  "Traveling": "Dropped",
+} as const;
+
+type Order = {
+  id: number;
+  currency_symbol: string;
+  total_amount: number;
+  customer_name: string;
+  date: string;
+  time_slot_value: string;
+  driver_status: keyof typeof driverStatusActions;
+  whatsapp: string;
+  number: string;
+  city?: string;
+  district?: string;
+  buildingName?: string;
+  flatVilla?: string;
+  street?: string;
+};
+
 export const OrdersScreen = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const { user, logout } = useAuth();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
   const flatListRef = useRef<FlatList<any>>(null);
@@ -119,6 +134,15 @@ export const OrdersScreen = () => {
     }
   }, [isFocused, user]);
 
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button title="Logout" color="#e74c3c" onPress={logout} />
+      ),
+      headerTitle: 'Driver Dashboard',
+    });
+  }, [navigation, logout]);
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -127,15 +151,18 @@ export const OrdersScreen = () => {
     );
   }
 
-  const renderOrder = ({ item }: { item: any }) => (
+  const renderOrder = ({ item }: { item: Order }) => (
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>#{item.id}</Text>
-        <Text style={styles.amount}>
-          {item.currency_symbol}
-          {item.total_amount}
-        </Text>
       </View>
+
+      {/* Address formatted below order id */}
+      <Text style={styles.address}>
+        {[item.buildingName, item.flatVilla, item.street, item.district, item.city]
+          .filter(Boolean)
+          .join(', ')}
+      </Text>
 
       <Text style={styles.subTitle}>{item.customer_name}</Text>
       <Text style={styles.infoLine}>
@@ -144,18 +171,18 @@ export const OrdersScreen = () => {
 
       <View style={styles.statusRow}>
         <Text
-          style={[styles.badge, { backgroundColor: badgeColor(item.driver_status) }]}
+        style={[styles.badge, { backgroundColor: badgeColor(item.driver_status as string) }]}
         >
-          {item.driver_status}
+        {String(item.driver_status)}
         </Text>
-        {driverStatusActions[item.driver_status] &&
+        {driverStatusActions[item.driver_status as keyof typeof driverStatusActions] &&
           (updatingOrderId === item.id ? (
             <ActivityIndicator size="small" />
           ) : (
             <Button
-              title={`Mark as ${driverStatusActions[item.driver_status]}`}
+              title={`Mark as ${driverStatusActions[item.driver_status as keyof typeof driverStatusActions]}`}
               onPress={() =>
-                changeStatus(item.id, driverStatusActions[item.driver_status])
+                changeStatus(item.id, driverStatusActions[item.driver_status as keyof typeof driverStatusActions])
               }
             />
           ))}
@@ -188,11 +215,6 @@ export const OrdersScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <View style={styles.topBar}>
-        <Text style={styles.screenTitle}>Driver Dashboard</Text>
-        <Button title="Logout" color="#e74c3c" onPress={logout} />
-      </View>
-
       <FlatList
         ref={flatListRef}
         data={orders}
@@ -206,6 +228,11 @@ export const OrdersScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  address: {
+    fontSize: 13,
+    color: '#555',
+    marginBottom: 2,
+  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   topBar: {
     flexDirection: 'row',
