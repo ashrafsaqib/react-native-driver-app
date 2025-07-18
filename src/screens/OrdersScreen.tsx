@@ -1,6 +1,16 @@
 // src/screens/OrdersScreen.tsx
 import React, { useEffect, useState, useRef } from 'react';
-import { ActivityIndicator, Alert, Button, FlatList, Linking, Platform, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Button,
+  FlatList,
+  Linking,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { driverApi } from '../api/driverApi';
@@ -39,14 +49,6 @@ export const OrdersScreen = () => {
   const [loading, setLoading] = useState(true);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
   const flatListRef = useRef<FlatList<any>>(null);
-
-  const driverStatusActions = {
-    "Pick me": "Accepted",
-    "Accepted": "Coming",
-    "Coming": "Arrived for pick",
-    "Arrived for pick": "Traveling",
-    "Traveling": "Dropped",
-  };
 
   const loadOrders = async () => {
     if (!user) return;
@@ -126,6 +128,25 @@ export const OrdersScreen = () => {
     }
   };
 
+  const cardBackgroundColor = (status: string) => {
+    switch (status) {
+      case 'Pick me':
+        return '#9cfe8dff';
+      case 'Accepted':
+        return '#E8F8F5';
+      case 'Coming':
+        return '#E6F7FF';
+      case 'Arrived for pick':
+        return '#F9EBEA';
+      case 'Traveling':
+        return '#FDF2E9';
+      case 'Dropped':
+        return '#F4ECF7';
+      default:
+        return '#F5F5F5';
+    }
+  };
+
   useEffect(() => {
     if (isFocused && user) {
       loadOrders();
@@ -152,12 +173,11 @@ export const OrdersScreen = () => {
   }
 
   const renderOrder = ({ item }: { item: Order }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: cardBackgroundColor(item.driver_status) }]}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>#{item.id}</Text>
       </View>
 
-      {/* Address formatted below order id */}
       <Text style={styles.address}>
         {[item.buildingName, item.flatVilla, item.street, item.district, item.city]
           .filter(Boolean)
@@ -171,43 +191,55 @@ export const OrdersScreen = () => {
 
       <View style={styles.statusRow}>
         <Text
-        style={[styles.badge, { backgroundColor: badgeColor(item.driver_status as string) }]}
+          style={[
+            styles.badge,
+            { backgroundColor: badgeColor(item.driver_status as string) },
+          ]}
         >
-        {String(item.driver_status)}
+          {String(item.driver_status)}
         </Text>
-        {driverStatusActions[item.driver_status as keyof typeof driverStatusActions] &&
+        {driverStatusActions[item.driver_status] &&
           (updatingOrderId === item.id ? (
             <ActivityIndicator size="small" />
           ) : (
             <Button
-              title={`Mark as ${driverStatusActions[item.driver_status as keyof typeof driverStatusActions]}`}
+              title={`Mark as ${driverStatusActions[item.driver_status]}`}
               onPress={() =>
-                changeStatus(item.id, driverStatusActions[item.driver_status as keyof typeof driverStatusActions])
+                changeStatus(
+                  item.id,
+                  driverStatusActions[item.driver_status],
+                )
               }
             />
           ))}
       </View>
 
       <View style={styles.actionRow}>
-        <Icon.Button
+        <Icon
+          size={36}
           name="logo-whatsapp"
-          backgroundColor="#25D366"
+          color="#25D366"
           onPress={() => openWhatsApp(item.whatsapp)}
         />
-        <Icon.Button
+        <Icon
+          size={36}
           name="call"
-          backgroundColor="#007AFF"
+          color="#007AFF"
           onPress={() => openPhone(item.number)}
         />
-        <Icon.Button
+        <Icon
+          size={36}
           name="location"
-          backgroundColor="#34B7F1"
+          color="#34B7F1"
           onPress={() => openMaps(item)}
         />
-        <Icon.Button
+        <Icon
+          size={36}
           name="chatbubble-ellipses-outline"
-          backgroundColor="#5856D6"
-          onPress={() => navigation.navigate('Chat', { orderId: item.id })}
+          color="#5856D6"
+          onPress={() =>
+            navigation.navigate('Chat', { orderId: item.id })
+          }
         />
       </View>
     </View>
@@ -247,7 +279,6 @@ const styles = StyleSheet.create({
   screenTitle: { fontWeight: 'bold', fontSize: 18 },
   list: { padding: 12 },
   card: {
-    backgroundColor: '#fff',
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
