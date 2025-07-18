@@ -6,6 +6,7 @@ import {
   Button,
   FlatList,
   Linking,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -25,9 +26,11 @@ export const OrdersScreen = () => {
   const flatListRef = useRef<FlatList<any>>(null);
 
   const driverStatusActions = {
-    Pending: 'Coming',
-    Coming: 'Arrived',
-    Arrived: 'Completed',
+    "Pick me": "Accepted",
+    "Accepted": "Coming",
+    "Coming": "Arrived for pick",
+    "Arrived for pick": "Traveling",
+    "Traveling": "Dropped",
   };
 
   const loadOrders = async () => {
@@ -57,17 +60,22 @@ export const OrdersScreen = () => {
   };
 
   const openWhatsApp = (num: string) => {
-    const url = `https://wa.me/${num?.replace(/\D/g, '')}`;
-    Linking.openURL(url).catch(() => Alert.alert('WhatsApp not available'));
+    const phone = num?.replace(/\D/g, '');
+    const url = `whatsapp://send?phone=${phone}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert('Error', 'Make sure WhatsApp is installed'),
+    );
   };
 
   const openPhone = (num: string) => {
     const url = `tel:${num}`;
-    Linking.openURL(url).catch(() => Alert.alert('Phone not available'));
+    Linking.openURL(url).catch(() =>
+      Alert.alert('Error', 'Phone app not available'),
+    );
   };
 
   const openMaps = (item: any) => {
-    const addr = [
+    const address = [
       item.city,
       item.district,
       item.buildingName,
@@ -76,27 +84,37 @@ export const OrdersScreen = () => {
     ]
       .filter(Boolean)
       .join(', ');
-    const url = `http://maps.apple.com/?address=${encodeURIComponent(addr)}`;
-    Linking.openURL(url).catch(() => Alert.alert('Maps not available'));
+
+    const encodedAddress = encodeURIComponent(address);
+    const url = Platform.select({
+      ios: `maps://?q=${encodedAddress}`,
+      android: `geo:0,0?q=${encodedAddress}`,
+    });
+
+    Linking.openURL(url ?? '').catch(() =>
+      Alert.alert('Error', 'Maps app not available'),
+    );
   };
 
   const badgeColor = (status: string) => {
     switch (status) {
-      case 'Pending': return '#f39c12';
-      case 'Coming': return '#3498db';
-      case 'Arrived': return '#2ecc71';
-      case 'Completed': return '#9b59b6';
-      default: return '#bdc3c7';
+      case 'Pending':
+        return '#f39c12';
+      case 'Coming':
+        return '#3498db';
+      case 'Arrived':
+        return '#2ecc71';
+      case 'Completed':
+        return '#9b59b6';
+      default:
+        return '#bdc3c7';
     }
   };
 
   useEffect(() => {
     if (isFocused && user) {
       loadOrders();
-      // Refresh orders every 10 seconds while the screen is focused
       const interval = setInterval(loadOrders, 10000);
-
-      // Clear interval when the screen is no longer focused
       return () => clearInterval(interval);
     }
   }, [isFocused, user]);
@@ -113,33 +131,57 @@ export const OrdersScreen = () => {
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>#{item.id}</Text>
-        <Text style={styles.amount}>{item.currency_symbol}{item.total_amount}</Text>
+        <Text style={styles.amount}>
+          {item.currency_symbol}
+          {item.total_amount}
+        </Text>
       </View>
 
       <Text style={styles.subTitle}>{item.customer_name}</Text>
-      <Text style={styles.infoLine}>🕓 {item.date} • {item.time_slot_value}</Text>
+      <Text style={styles.infoLine}>
+        🕓 {item.date} • {item.time_slot_value}
+      </Text>
 
       <View style={styles.statusRow}>
-        <Text style={[styles.badge, { backgroundColor: badgeColor(item.driver_status) }]}>
+        <Text
+          style={[styles.badge, { backgroundColor: badgeColor(item.driver_status) }]}
+        >
           {item.driver_status}
         </Text>
-        {driverStatusActions[item.driver_status] && (
-          updatingOrderId === item.id ? (
+        {driverStatusActions[item.driver_status] &&
+          (updatingOrderId === item.id ? (
             <ActivityIndicator size="small" />
           ) : (
             <Button
               title={`Mark as ${driverStatusActions[item.driver_status]}`}
-              onPress={() => changeStatus(item.id, driverStatusActions[item.driver_status])}
+              onPress={() =>
+                changeStatus(item.id, driverStatusActions[item.driver_status])
+              }
             />
-          )
-        )}
+          ))}
       </View>
 
       <View style={styles.actionRow}>
-        <Icon.Button name="logo-whatsapp" backgroundColor="#25D366" onPress={() => openWhatsApp(item.whatsapp)} />
-        <Icon.Button name="call" backgroundColor="#007AFF" onPress={() => openPhone(item.number)} />
-        <Icon.Button name="location" backgroundColor="#34B7F1" onPress={() => openMaps(item)} />
-        <Icon.Button name="chatbubble-ellipses-outline" backgroundColor="#5856D6" onPress={() => navigation.navigate('Chat', { orderId: item.id })} />
+        <Icon.Button
+          name="logo-whatsapp"
+          backgroundColor="#25D366"
+          onPress={() => openWhatsApp(item.whatsapp)}
+        />
+        <Icon.Button
+          name="call"
+          backgroundColor="#007AFF"
+          onPress={() => openPhone(item.number)}
+        />
+        <Icon.Button
+          name="location"
+          backgroundColor="#34B7F1"
+          onPress={() => openMaps(item)}
+        />
+        <Icon.Button
+          name="chatbubble-ellipses-outline"
+          backgroundColor="#5856D6"
+          onPress={() => navigation.navigate('Chat', { orderId: item.id })}
+        />
       </View>
     </View>
   );
