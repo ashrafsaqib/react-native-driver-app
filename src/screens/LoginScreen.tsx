@@ -20,7 +20,7 @@ export const LoginScreen = () => {
     try {
       await login(username.trim(), password.trim());
     } catch (err: any) {
-      Alert.alert('Login failed', err.message || 'Unable to sign in');
+      Alert.alert('Login failed');
     } finally {
       setLoading(false);
     }
