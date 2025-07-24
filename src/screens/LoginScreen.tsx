@@ -7,18 +7,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export const LoginScreen = () => {
   const { login } = useAuth();
 
-  const [username, setUsername] = useState('usma@tadhem.com');
+  const [email, setEmail] = useState('usma@lipslay.com');
   const [password, setPassword] = useState('test');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please fill in both fields.');
       return;
     }
     setLoading(true);
     try {
-      await login(username.trim(), password.trim());
+      await login(email.trim(), password.trim());
     } catch (err: any) {
       Alert.alert('Login failed');
     } finally {
@@ -28,12 +28,11 @@ export const LoginScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-
       <View style={styles.container}>
         <TextInput
-          placeholder="Username / Email"
-          value={username}
-          onChangeText={setUsername}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
           style={styles.input}
           autoCapitalize="none"
           keyboardType="email-address"

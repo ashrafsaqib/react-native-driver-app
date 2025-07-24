@@ -26,19 +26,14 @@ const driverStatusActions = {
 
 type Order = {
   id: number;
-  currency_symbol: string;
-  total_amount: number;
-  customer_name: string;
-  date: string;
+  driver_status: string;
+  staff_name: string;
   time_slot_value: string;
-  driver_status: keyof typeof driverStatusActions;
-  whatsapp: string;
-  number: string;
-  city?: string;
-  district?: string;
-  buildingName?: string;
-  flatVilla?: string;
-  street?: string;
+  latitude: string;
+  longitude: string;
+  address: string;
+  staff_phone: string;
+  staff_whatsapp: string;
 };
 
 export const OrdersScreen = () => {
@@ -66,7 +61,7 @@ export const OrdersScreen = () => {
     if (!user) return;
     setUpdatingOrderId(orderId);
     try {
-      await driverApi.updateStatus(orderId, status, user.id);
+      await driverApi.updateStatus(orderId, status);
       await loadOrders();
       flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     } catch {
@@ -178,22 +173,15 @@ export const OrdersScreen = () => {
         <Text style={styles.title}>#{item.id}</Text>
       </View>
 
-      <Text style={styles.address}>
-        {[item.buildingName, item.flatVilla, item.street, item.district, item.city]
-          .filter(Boolean)
-          .join(', ')}
-      </Text>
-
-      <Text style={styles.subTitle}>{item.customer_name}</Text>
-      <Text style={styles.infoLine}>
-        🕓 {item.date} • {item.time_slot_value}
-      </Text>
+      <Text style={styles.address}>{item.address}</Text>
+      <Text style={styles.subTitle}>{item.staff_name}</Text>
+      <Text style={styles.infoLine}>🕓 {item.time_slot_value}</Text>
 
       <View style={styles.statusRow}>
         <Text
           style={[
             styles.badge,
-            { backgroundColor: badgeColor(item.driver_status as string) },
+            { backgroundColor: badgeColor(item.driver_status) },
           ]}
         >
           {String(item.driver_status)}
@@ -219,13 +207,13 @@ export const OrdersScreen = () => {
           size={36}
           name="logo-whatsapp"
           color="#25D366"
-          onPress={() => openWhatsApp(item.whatsapp)}
+          onPress={() => openWhatsApp(item.staff_whatsapp)}
         />
         <Icon
           size={36}
           name="call"
           color="#007AFF"
-          onPress={() => openPhone(item.number)}
+          onPress={() => openPhone(item.staff_phone)}
         />
         <Icon
           size={36}

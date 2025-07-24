@@ -39,25 +39,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     })();
   }, []);
 
-const login = async (username: string, password: string) => {
-  const res = await driverApi.login({ username, password });
+  const login = async (email: string, password: string) => {
+    const res = await driverApi.login({ email, password });
 
-  // Guard against bad response
-  if (!res.access_token || !res.user?.id) {
-    throw new Error('Invalid server response');
-  }
+    // Guard against bad response
+    if (!res.token || !res.user?.id) {
+      throw new Error('Invalid server response');
+    }
 
-  const newToken = res.access_token;
-  const newUserId = String(res.user.id);
+    const newToken = res.token;
+    const newUserId = String(res.user.id);
 
-  await Promise.all([
-    AsyncStorage.setItem(TOKEN_KEY, newToken),
-    AsyncStorage.setItem(USER_ID_KEY, newUserId),
-  ]);
+    await Promise.all([
+      AsyncStorage.setItem(TOKEN_KEY, newToken),
+      AsyncStorage.setItem(USER_ID_KEY, newUserId),
+    ]);
 
-  setToken(newToken);
-  setUser(res.user);
-};
+    setToken(newToken);
+    setUser(res.user);
+  };
 
   const logout = async () => {
     await Promise.all([

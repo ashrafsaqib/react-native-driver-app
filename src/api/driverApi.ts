@@ -1,5 +1,6 @@
 // src/api/driverApi.ts
-const BASE = 'https://admin.tadhem.com/api';
+import { BASE_URL } from '../../config';
+
 const DEBUG = true;
 
 const logFetch = async (url: string, options?: RequestInit) => {
@@ -14,6 +15,7 @@ const logFetch = async (url: string, options?: RequestInit) => {
 
   try {
     const response = await fetch(url, options);
+    console.log('response', response);
     const data = await response.json();
 
     if (DEBUG) {
@@ -30,25 +32,29 @@ const logFetch = async (url: string, options?: RequestInit) => {
       console.error('%c[API ERROR]', 'color: red;', { url, error });
     }
     throw error;
-  }
+  };
 };
 
 export const driverApi = {
-  login: (payload: { username: string; password: string }) =>
-    logFetch(`${BASE}/driverLogin`, {
+  login: (payload: { email: string; password: string }) =>
+    logFetch(`${BASE_URL}/driver/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
 
   getOrders: (userId: number) =>
-    logFetch(`${BASE}/driverOrders?user_id=${userId}`),
+    logFetch(`${BASE_URL}/driver/orders?user_id=${userId}`),
 
-  updateStatus: (orderId: number, status: string, userId: number) =>
-    logFetch(`${BASE}/driverOrderStatusUpdate/${orderId}?status=${status}&user_id=${userId}`),
+  updateStatus: (orderId: number, status: string) =>
+    logFetch(`${BASE_URL}/driver/order/driver-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, order_id: orderId }),
+    }),
 
   getChat: (orderId: number) =>
-    logFetch(`https://api.tadhem.com/api/driver/order/${orderId}/chats`),
+    logFetch(`${BASE_URL}/driver/order/${orderId}/chats`),
 
   sendChat: (
     orderId: number,
@@ -58,7 +64,7 @@ export const driverApi = {
       type?: string;
     },
   ) => {
-    const url = `https://api.tadhem.com/api/driver/order/${orderId}/chats`;
+    const url = `${BASE_URL}/driver/order/${orderId}/chats`;
     const options: RequestInit = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -96,5 +102,5 @@ export const driverApi = {
   },
 
   getNotifications: (userId: number) =>
-    logFetch(`${BASE}/notification?user_id=${userId}`),
+    logFetch(`${BASE_URL}/driver/notifications?update=true&user_id=${userId}`),
 };

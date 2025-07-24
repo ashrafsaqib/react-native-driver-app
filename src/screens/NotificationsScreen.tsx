@@ -36,7 +36,7 @@ export const NotificationsScreen = () => {
     // Only run the effect if the screen is focused and we have a user
     if (isFocused && user) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 3000);
+      const interval = setInterval(fetchNotifications, 5000);
 
       // This cleanup function will run when the screen is no longer focused
       // or when the component unmounts.
